@@ -1,0 +1,77 @@
+# ==========================================
+# Node / Frontend
+# ==========================================
+
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# NPM / Yarn / PNPM logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+
+# ==========================================
+# Python / Backend
+# ==========================================
+
+# Virtual environment
+backend/.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Python test / tooling cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+
+# ==========================================
+# Environment / Secrets
+# ==========================================
+
+.env
+.env.*
+!.env.example
+
+
+# ==========================================
+# Logs
+# ==========================================
+
+logs/
+*.log
+
+
+# ==========================================
+# Editor
+# ==========================================
+
+.vscode/*
+!.vscode/extensions.json
+
+.idea/
+.DS_Store
+
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+# ==========================================
+# OS
+# ==========================================
+
+Thumbs.db
