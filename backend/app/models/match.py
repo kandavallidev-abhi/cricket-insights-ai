@@ -22,10 +22,10 @@ class Innings(BaseModel):
     runs: int
     wickets: int
 
-    batting: list["BattingPerformance"] = Field(default_factory = [])
-    bowling: list["BowlingPerformance"] = Field(default_factory = [])
+    batting: list["BattingPerformance"] = Field(default_factory = list)
+    bowling: list["BowlingPerformance"] = Field(default_factory = list)
 
-    fall_of_wickets: list[FallOfWicket] = Field(default_factory = [])
+    fall_of_wickets: list[FallOfWicket] = Field(default_factory = list)
 
 class Match(BaseModel):
     tournament_name: str

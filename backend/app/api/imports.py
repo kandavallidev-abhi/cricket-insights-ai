@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, UploadFile
 from app.services.pdf_parser import extract_text 
+from app.services.cricheroes.match_parser import parse_match
 
 router = APIRouter()
 
@@ -8,9 +9,16 @@ async def upload_scorecard(file: UploadFile = File(...)) :
     file_content = await file.read()
     
     extracted_text = extract_text(file_content)
+    parsed_match = parse_match(extracted_text[0])
+
+    # for index, page in enumerate(extracted_text):
+    #     print(f"\n========== PAGE {index + 1} ==========")
+
+    #     for line_number, line in enumerate(page.splitlines()):
+    #         print(line_number, repr(line))
 
     return {
         "filename": file.filename,
         "content_type": file.content_type,
-        "text": extracted_text
+        "match": parsed_match
     }
