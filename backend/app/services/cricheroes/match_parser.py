@@ -2,27 +2,123 @@ from app.models.match import Match
 from datetime import datetime,timezone
 import re
 
-def parse_match(page: str) -> Match:
+def parse_match(page: str, our_team: str) -> Match:
     lines = [line.strip() for line in page.splitlines() if line.strip()]
     
-    tournament_name = lines[0]
-    stage = lines[1].strip("()")
+    # --------------------------------------------------
+    # Tournament name + stage
+    # --------------------------------------------------
 
-    team_line = lines[4]
-    team_name = team_line.replace("Match", "").replace("vs", "").strip()
+    # Find the CricHeroes page header.
+    # Example:
+    # 8/4/26, 3:55 AM cricheroes.com 1 of 4
+    header_index = next(index for index, line in enumerate(lines) if "cricheroes.com" in line and "of 4" in line)
 
-    opponent_name = lines[5]
+    title_line = lines[header_index - 1]
+    stage = None
+    stage_keywords = [
+        "league",
+        "group",
+        "final",
+        "semi",
+        "quarter",
+    ]
 
-    ground = (lines[6].replace("Ground ", "") + " " + lines[7]).strip()
+    # Case 1:
+    # Stage is on its own line.
+    #
+    # SUPERSTARS T20 LEAGUE...
+    # (Silver Final)
+    # 8/4/26, 3:55 AM cricheroes.com 1 of 4
+    if title_line.startswith("(") and title_line.endswith(")"):
+        candidate_stage = title_line[1:-1].strip()
 
-    date_text = lines[8].replace("Date ", "").strip()
+        if any(
+            keyword in candidate_stage.lower()
+            for keyword in stage_keywords
+        ):
+            stage = candidate_stage
+            tournament_name = lines[header_index - 2]
+        else:
+            tournament_name = lines[header_index - 2]   
+
+    # Case 2:
+    # Stage is at the end of the tournament title.
+    #
+    # GENTLEMENS CRICKET LEAGUE (GCL -5) (League Matches)
+    # 8/13/26, 5:47 PM cricheroes.com 1 of 4
+    else:
+        stage_match = re.search(
+            r"\(([^()]*)\)\s*$",
+            title_line,
+        )
+
+        if stage_match:
+            candidate_stage = stage_match.group(1).strip()
+
+            if any(
+                keyword in candidate_stage.lower()
+                for keyword in stage_keywords
+            ):
+                stage = candidate_stage
+                tournament_name = (
+                    title_line[:stage_match.start()]
+                    .strip()
+                )
+            else:
+                tournament_name = title_line
+        else:
+            tournament_name = title_line
+
+    # --------------------------------------------------
+    # Teams
+    # --------------------------------------------------
+    match_line_index = next(index for index, line in enumerate(lines) if line.startswith("Match") and "vs" in line)
+
+    team_line = lines[match_line_index]
+    first_team = team_line.replace("Match", "").replace("vs", "").strip()
+    second_team = lines[match_line_index+1]
+
+    if first_team == our_team:
+        team_name = first_team
+        opponent_name = second_team
+    else:
+        team_name = second_team
+        opponent_name = first_team
+        
+    # --------------------------------------------------
+    # Ground
+    # --------------------------------------------------
+    ground_line_index = next(index for index, line in enumerate(lines) if line.startswith("Ground"))
+
+    ground = (lines[ground_line_index].replace("Ground ", "") + " " + lines[ground_line_index+1]).strip()
+
+    # --------------------------------------------------
+    # Date
+    # --------------------------------------------------
+
+    date_line = next(
+        line for line in lines
+        if line.startswith("Date ")
+    )
+
+    date_text = date_line.replace("Date ", "").strip()
+
     match_date = datetime.strptime(
         date_text,
         "%Y-%m-%d, %I:%M %p UTC" 
     ).replace(tzinfo=timezone.utc)
+
     day = match_date.strftime("%A")
-    # 11 'Toss Red Wings opt to bat'
-    toss_line = lines[10].replace("Toss ", "").strip()
+
+    # --------------------------------------------------
+    # Toss
+    # --------------------------------------------------
+
+    toss_line = next(
+        line for line in lines
+        if line.startswith("Toss ")
+        ).replace("Toss ", "").strip()
 
     if "opt to bat" in toss_line:
         toss_winner = toss_line.replace("opt to bat", "").strip()
@@ -31,17 +127,66 @@ def parse_match(page: str) -> Match:
     elif "opt to bowl" in toss_line:
         toss_winner = toss_line.replace("opt to bowl", "").strip()
         toss_decision = "bowl"
-        batting_first = opponent_name
+        batting_first = (opponent_name if toss_winner == team_name else toss_winner)
     else:
         raise ValueError(f"Unsupported toss format:, {toss_line}")
 
-    team_score = parse_score(lines[11])
-    opponent_score = parse_score(lines[12])
+    # --------------------------------------------------
+    # Scores
+    # --------------------------------------------------
 
-    result = lines[13].replace("Result", "").strip()
+    score_lines = [
+        line 
+        for line in lines 
+        if re.search(
+            r"\d+/\d+\s+\([\d.]+\s+Ov\)",
+            line,
+        )
+    ]
+
+    if len(score_lines) < 2:
+        raise ValueError(
+            f"Could not find two score lines: {score_lines}"
+        )
+    
+    print("score_lines =", score_lines)
+
+    first_score = parse_score(score_lines[0])
+    second_score = parse_score(score_lines[1])
+
+    # Determine which score belongs to our team.
+    first_score_team = extract_score_team(score_lines[0])
+    second_score_team = extract_score_team(score_lines[1])
+
+    if first_score_team == our_team:
+        team_score = first_score
+        opponent_score = second_score
+    elif second_score_team == our_team:
+        team_score = second_score
+        opponent_score = first_score
+    else:
+        raise ValueError(
+            f"Could not match score to team: "
+            f"{team_name}, {score_lines}"
+        )
+
+    # --------------------------------------------------
+    # Result
+    # --------------------------------------------------
+
+    result = next(
+        line for line in lines
+        if line.startswith("Result ")
+    ).replace("Result ", "").strip()
+
+     # --------------------------------------------------
+    # Captain
+    # --------------------------------------------------
     # 2 Abhi (Red Wings) Captain 27
-    captain_line = next(line for line in lines if "Captain" in line and team_name in line)
-    captain = captain_line.split(" (")[0].split(" ", 1)[1]
+    captain_line = next((line for line in lines if "Captain" in line and team_name in line), None)
+    captain = None
+    if captain_line:
+        captain = captain_line.split(" (")[0].split(" ", 1)[1]
 
     return Match(
          tournament_name=tournament_name,
@@ -74,20 +219,25 @@ def parse_score(line: str) -> dict:
         "overs": int(float(match.group(3)))
     }
 
-# 0 '\xa0'
-# 1 'SUPERSTARS T20 LEAGUE...'
-# 2 '(Silver Final)'
-# 3 '8/4/26, 3:55 AM cricheroes.com 1 of 4'
-# 4 'Match Details'
-# 5 'Match Red Wings vs'
-# 6 'The Trailblazers'
-# 7 'Ground S2 Sports Infinity Cricket Arena,'
-# 8 'Hyderabad (Telangana)'
-# 9 'Date 2026-08-02, 09:24 AM UTC'
-# 10 'Match Result'
-# 11 'Toss Red Wings opt to bat'
-# 12 'Total Red Wings 132/9 (20.0 Ov)'
-# 13 'The Trailblazers 100/10 (20.0 Ov)'
-# 14 'Result Red Wings won by 32 runs'
-# --
-# ['SUPERSTARS T20 LEAGUE 29 (WEEKEND DAY) BY S2 SPORTS', '(Silver Final)', '8/4/26, 3:55 AM cricheroes.com 1 of 4', 'Match Details', 'Match Red Wings vs', 'The Trailblazers', 'Ground S2 Sports Infinity Cricket Arena,', 'Hyderabad (Telangana)', 'Date 2026-08-02, 09:24 AM UTC', 'Match Result', 'Toss Red Wings opt to bat', 'Total Red Wings 132/9 (20.0 Ov)', 'The Trailblazers 100/10 (20.0 Ov)', 'Result Red Wings won by 32 runs', 'Best Performances - Batsmen', 'Players Name R B 4s 6s SR', 'Sandeep Mulpuri 59 53 5 1 111.32', 'Sk 54 55 3 2 98.18', 'Sai 24 16 3 1 150.00', 'Best Performances - Bowlers', 'Players Name O M R W Eco', 'Rakesh 1.0 0 3 3 3.00', 'Aamir Raina 4.0 0 15 3 3.75', 'Sai 4.0 0 17 3 4.25', 'Match Officials', 'No Name Role Signature', '1 Shawariq Scorer', '2 Abhi (Red Wings) Captain', '3 Amit Sharma (The Trailblazers) Captain']
+def extract_score_team(line: str) -> str:
+    # """
+    # Example:
+    # 'Total Red Wings 132/9 (20.0 Ov)'
+    # 'The Trailblazers 100/10 (20.0 Ov)'
+    # """
+
+    score_match = re.search(
+        r"\d+/\d+\s+\([\d.]+\s+Ov\)",
+        line,
+    )
+
+    if not score_match:
+        raise ValueError(
+            f"Could not find score in line: {line}"
+        )
+
+    team_part = line[:score_match.start()].strip()
+
+    team_part = team_part.removeprefix("Total").strip()
+
+    return team_part

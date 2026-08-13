@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
-from .performance import (BattingPerformance, BowlingPerformance)
+from .performance import BattingPerformance, BowlingPerformance
 
 class MatchPlayer(BaseModel):
     player_name: str
@@ -22,8 +22,8 @@ class Innings(BaseModel):
     runs: int
     wickets: int
 
-    batting: list["BattingPerformance"] = Field(default_factory = list)
-    bowling: list["BowlingPerformance"] = Field(default_factory = list)
+    batting: list[BattingPerformance] = Field(default_factory = list)
+    bowling: list[BowlingPerformance] = Field(default_factory = list)
 
     fall_of_wickets: list[FallOfWicket] = Field(default_factory = list)
 
