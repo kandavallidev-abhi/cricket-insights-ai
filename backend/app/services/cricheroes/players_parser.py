@@ -32,7 +32,7 @@ def parse_players(page: str, our_team: str) -> list[MatchPlayer] :
         else:
             player_name = raw_player_name
             is_wk = False
-            is_C = False
+            is_c = False
         player.append(MatchPlayer(
             player_name= player_name,
             is_captain= is_c,

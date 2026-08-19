@@ -21,7 +21,10 @@ async def upload_scorecard(file: UploadFile = File(...)) :
     parsed_players = parse_players(extracted_text[1], parsed_match.team_name)
     parsed_match.players = parsed_players
     parsed_match.wicketkeeper = next((player.player_name for player in parsed_players if player.is_wicketkeeper == True), None)
-    
+    parsed_innings_1 = parse_innings(extracted_text[2], parsed_match.team_name, parsed_match.opponent_name)
+    parsed_innings_2 = parse_innings(extracted_text[3], parsed_match.team_name, parsed_match.opponent_name)
+    parsed_match.innings = [parsed_innings_1, parsed_innings_2]
+
     return {
         "filename": file.filename,
         "content_type": file.content_type,
