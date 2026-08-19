@@ -23,9 +23,9 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     if not score_match:
         raise ValueError(f"Could not parse innings score: '{score_match}'")
 
-    runs = int(score_match.group(1))
-    wickets = int(score_match.group(2))
-    overs = score_match.group(3)
+    innings_runs = int(score_match.group(1))
+    innings_wickets = int(score_match.group(2))
+    innings_overs = score_match.group(3)
 
     # extract fall of wickets
     lines = [line.strip() for line in page.splitlines() if line.strip()]
@@ -133,10 +133,16 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
             player_name = " ".join(middle)
             dismissal_details = None
             dismissal = None
-        elif middle[dismissal_index] == "not":
+        elif middle[dismissal_index].lower() == "not":
             player_name = " ".join(middle[:dismissal_index])
             dismissal_details = None
             dismissal = "not out"
+        elif middle[dismissal_index].lower() == "run":
+            player_name = " ".join(middle[:dismissal_index])
+            dismissal = "run out"
+            dismissal_details = " ".join(
+                middle[dismissal_index + 2:]
+            )
         else:
             player_name = " ".join(middle[:dismissal_index])
             dismissal = middle[dismissal_index]
@@ -178,7 +184,9 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
             r"([\d.]+)$",            # 12 economy
             lines[index]
         )
-        
+        if not bowling_stats_match:
+            raise ValueError(f"Could not parse bowling line: {lines[index]}")
+            
         bowling_position = int(bowling_stats_match.group(1))
         player_name = bowling_stats_match.group(2).strip()
 
@@ -189,7 +197,7 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
             flags=re.IGNORECASE,
         ).strip()
 
-        overs = bowling_stats_match.group(3)
+        bowler_overs = bowling_stats_match.group(3)
         maidens = int(bowling_stats_match.group(4))
         runs_conceded = int(bowling_stats_match.group(5))
         wickets = int(bowling_stats_match.group(6))
@@ -203,7 +211,7 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
         bowling_stats.append(
             BowlingPerformance(
                 player_name= player_name,
-                overs=overs,
+                overs=bowler_overs,
                 maidens=maidens,
                 runs_conceded=runs_conceded,
                 wickets=wickets,
@@ -219,9 +227,9 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     return Innings(
         batting_team=batting_team,
         bowling_team=bowling_team,
-        overs=overs,
-        runs=runs,
-        wickets=wickets,
+        overs=innings_overs,
+        runs=innings_runs,
+        wickets=innings_wickets,
         fall_of_wickets=fall_of_wickets,
         batting= batting_stats,
         bowling= bowling_stats
