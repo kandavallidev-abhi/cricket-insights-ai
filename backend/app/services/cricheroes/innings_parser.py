@@ -167,7 +167,6 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     bowling_header_index = next(index for index, line in enumerate(lines) if "No Bowler" in line)
     bowling_stats = []
     for index in range(bowling_header_index+1, len(lines)):
-        print(lines[index])
         # bowling stats
         # O M R W 0s 4s 6s WD NB Eco'
         bowling_stats_match = re.search(
@@ -186,7 +185,7 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
         )
         if not bowling_stats_match:
             raise ValueError(f"Could not parse bowling line: {lines[index]}")
-            
+
         bowling_position = int(bowling_stats_match.group(1))
         player_name = bowling_stats_match.group(2).strip()
 
