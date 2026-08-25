@@ -12,7 +12,7 @@ def parse_match(page: str, our_team: str) -> Match:
     # Find the CricHeroes page header.
     # Example:
     # 8/4/26, 3:55 AM cricheroes.com 1 of 4
-    header_index = next(index for index, line in enumerate(lines) if "cricheroes.com" in line and "of 4" in line)
+    header_index = next(index for index, line in enumerate(lines) if "cricheroes.com" in line and re.search(r"\d+\s+of\s+\d+", line))
 
     title_line = lines[header_index - 1]
     stage = None
@@ -124,10 +124,24 @@ def parse_match(page: str, our_team: str) -> Match:
         toss_winner = toss_line.replace("opt to bat", "").strip()
         toss_decision = "bat"
         batting_first = toss_winner
-    elif "opt to bowl" in toss_line:
-        toss_winner = toss_line.replace("opt to bowl", "").strip()
+    elif "opt to bowl"  in toss_line or "opt to field" in toss_line:
+        decision_text = (
+            "opt to bowl"
+            if "opt to bowl" in toss_line
+            else "opt to field"
+        )
+
+        toss_winner = toss_line.replace(
+            decision_text, ""
+        ).strip()
+
         toss_decision = "bowl"
-        batting_first = (opponent_name if toss_winner == team_name else toss_winner)
+
+        batting_first = (
+            opponent_name
+            if toss_winner == team_name
+            else toss_winner
+        )
     else:
         raise ValueError(f"Unsupported toss format:, {toss_line}")
 
@@ -174,10 +188,20 @@ def parse_match(page: str, our_team: str) -> Match:
     # Result
     # --------------------------------------------------
 
-    result = next(
+    print("LINES AROUND RESULT:")
+
+    for index, line in enumerate(lines):
+        print(index, repr(line))
+        
+    result_line = next(
         line for line in lines
-        if line.startswith("Result ")
-    ).replace("Result ", "").strip()
+        if line.startswith("Result")
+    )
+    result = re.sub(
+        r"^Result\s*",
+        "",
+        result_line
+    ).strip()
 
      # --------------------------------------------------
     # Captain

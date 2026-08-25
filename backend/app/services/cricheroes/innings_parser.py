@@ -1,4 +1,4 @@
-from app.models.match import Innings, FallOfWicket
+from app.models.match import Innings, InningsType, FallOfWicket
 import re
 from app.services.cricheroes.match_parser import extract_score_team
 from app.models.performance import BattingPerformance, BowlingPerformance
@@ -6,6 +6,26 @@ from app.models.performance import BattingPerformance, BowlingPerformance
 def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     innings_line = next(line for line in page.splitlines() if re.search(r"\d+/\d+\s+\([\d.]+\s+Ov\)", line) and "Innings" in line)
     
+    innings_number_match = re.search(
+        r"\((\d+)(?:st|nd|rd|th)\s+Innings\)",
+        innings_line,
+    )
+
+    if not innings_number_match:
+        raise ValueError(
+            f"Could not determine innings number: {innings_line}"
+        )
+
+    innings_number = int(innings_number_match.group(1))
+
+    if innings_number == 1:
+        innings_type = InningsType.REGULAR
+        super_over_number = None
+    else:
+        innings_type = InningsType.SUPER_OVER
+        super_over_number = innings_number - 1
+
+
     batting_team = extract_score_team(innings_line)
 
     if batting_team == our_team:
@@ -226,11 +246,14 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     return Innings(
         batting_team=batting_team,
         bowling_team=bowling_team,
+        innings_number=innings_number,
+        innings_type=innings_type,
+        super_over_number=super_over_number,
         overs=innings_overs,
         runs=innings_runs,
         wickets=innings_wickets,
         fall_of_wickets=fall_of_wickets,
-        batting= batting_stats,
-        bowling= bowling_stats
+        batting=batting_stats,
+        bowling=bowling_stats
     )
 

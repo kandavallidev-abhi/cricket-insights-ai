@@ -9,6 +9,12 @@ class BattingMetric(str, Enum):
     BOUNDARIES = "boundaries"
     RUNS_WITHOUT_BOUNDARIES = "runs_without_boundaries"
 
+class InningsScope(str, Enum):
+    REGULAR = "regular"
+    SUPER_OVER = "super_over"
+    ALL = "all"
+
 class BattingQuery(BaseModel):
     metric: BattingMetric
     rank: int = Field(default= 1, ge= 1)
+    innings_scope: InningsScope = InningsScope.REGULAR

@@ -1,6 +1,11 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 from .performance import BattingPerformance, BowlingPerformance
+from enum import Enum
+
+class InningsType(str, Enum):
+    REGULAR = "regular"
+    SUPER_OVER = "super_over"
 
 class MatchPlayer(BaseModel):
     player_name: str
@@ -21,6 +26,10 @@ class Innings(BaseModel):
     overs: str
     runs: int
     wickets: int
+    
+    innings_number: int
+    innings_type: InningsType = InningsType.REGULAR
+    super_over_number: int | None = None
 
     batting: list[BattingPerformance] = Field(default_factory = list)
     bowling: list[BowlingPerformance] = Field(default_factory = list)

@@ -7,7 +7,7 @@ def validate_match(match: Match) -> None:
         raise ValueError("Team and opponent cannot be the same")
 
     # We expect exactly two innings
-    if len(match.innings) != 2:
+    if len(match.innings) < 2:
         raise ValueError(
             f"Expected 2 innings, found {len(match.innings)}"
         )
