@@ -47,3 +47,7 @@ class WicketKeepingPerformance(BaseModel):
     stumpings: int = 0
     run_outs: int = 0
     run_out_assists: int = 0
+
+class BattingRankingResult(BaseModel):
+    player_name: str
+    value: int | float

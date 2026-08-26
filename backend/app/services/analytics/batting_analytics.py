@@ -1,11 +1,12 @@
 from app.models.match import Innings
-from app.models.performance import BattingPerformance
+from app.models.performance import BattingRankingResult
 from app.models.analytic import BattingQuery
 
-def get_batting_ranking(innings: Innings, query: BattingQuery) -> list[BattingPerformance]:
+def get_batting_ranking(innings: list[Innings], query: BattingQuery) -> list[BattingRankingResult]:
 
-    if not innings.batting:
-        return []
+
+    # if not innings.batting:
+    #     return []
     
     metric_functions = {
         "runs": lambda player: player.runs,
@@ -24,22 +25,37 @@ def get_batting_ranking(innings: Innings, query: BattingQuery) -> list[BattingPe
     if query.rank < 1:
         raise ValueError(f"Rank should be greater than 0")
 
-    batting_performance_list = sorted(
-        innings.batting,
-        key=metric_function,
+    batting_performance_list = [player for inning in innings for player in inning.batting]
+
+    player_metrics_totals = {}
+    for player in batting_performance_list:
+        value = metric_function(player)
+
+        if player.player_name in player_metrics_totals:
+            player_metrics_totals[player.player_name] += value
+        else:
+            player_metrics_totals[player.player_name] = value
+
+    metric_values = sorted(
+        set(player_metrics_totals.values()),
         reverse=True
     )
 
-    if query.rank > len(batting_performance_list):
+    if query.rank > len(metric_values):
         return []
     
-    rank_value = metric_function(batting_performance_list[query.rank - 1])
+    rank_value = metric_values[query.rank - 1]
 
-    return [ 
-        player
-        for player in batting_performance_list
-        if metric_function(player) ==  rank_value
+    ranked_players = [
+        BattingRankingResult( 
+            player_name=player_name,
+            value=value
+        )
+        for player_name, value in player_metrics_totals.items()
+        if value == rank_value
     ]
+
+    return ranked_players
 
 
 
