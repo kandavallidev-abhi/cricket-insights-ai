@@ -653,8 +653,9 @@ innings = [
 #     rank=1,
 #     innings_scope="super_over"
 # )
+question = "most runs with out fours and sixers"
 
-result = answer_batting_query(innings, "Red Wings")
+result = answer_batting_query(innings, "Red Wings", question)
 
 for player in result:
     print(player.player_name, player.value)
