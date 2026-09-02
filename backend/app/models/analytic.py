@@ -18,3 +18,29 @@ class BattingQuery(BaseModel):
     metric: BattingMetric
     rank: int = Field(default= 1, ge= 1)
     innings_scope: InningsScope = InningsScope.ALL
+
+class BowlingMetric(str, Enum):
+    WICKETS="wickets"
+    RUNS_CONCEDED="runs_conceded"
+    OVERS="overs"
+    ECONOMY="economy"
+    DOT_BALLS="dot_balls"
+    FOURS_CONCEDED="fours_conceded"
+    SIXES_CONCEDED="sixes_conceded"
+    WIDES="wides"
+    NO_BALLS="no_balls"
+
+class BowlingQuery(BaseModel):
+    metric: BowlingMetric
+    rank: int = Field(default= 1, ge= 1)
+    innings_scope: InningsScope = InningsScope.ALL
+
+class QueryType(str, Enum):
+    BATIING= "batting"
+    BOWLING= "bowling"
+
+class AnalyticsQuery(BaseModel):
+    query_type: QueryType
+    batting: BattingQuery | None = None
+    bowling: BowlingQuery | None = None
+

@@ -51,3 +51,7 @@ class WicketKeepingPerformance(BaseModel):
 class BattingRankingResult(BaseModel):
     player_name: str
     value: int | float
+
+class BowlingRankingResult(BaseModel):
+    player_name: str
+    value: int | float
