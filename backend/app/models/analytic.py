@@ -16,8 +16,8 @@ class InningsScope(str, Enum):
 
 class BattingQuery(BaseModel):
     metric: BattingMetric
-    rank: int = Field(default= 1, ge= 1)
-    innings_scope: InningsScope = InningsScope.ALL
+    rank: int = Field(ge= 1)
+    innings_scope: InningsScope
 
 class BowlingMetric(str, Enum):
     WICKETS="wickets"
@@ -32,11 +32,11 @@ class BowlingMetric(str, Enum):
 
 class BowlingQuery(BaseModel):
     metric: BowlingMetric
-    rank: int = Field(default= 1, ge= 1)
-    innings_scope: InningsScope = InningsScope.ALL
+    rank: int = Field(ge= 1)
+    innings_scope: InningsScope
 
 class QueryType(str, Enum):
-    BATIING= "batting"
+    BATTING= "batting"
     BOWLING= "bowling"
 
 class AnalyticsQuery(BaseModel):

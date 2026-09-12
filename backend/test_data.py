@@ -1,11 +1,5 @@
-from app.models.analytic import BattingMetric, BattingQuery
-from app.services.analytics.batting_analytics import get_batting_ranking
-from app.services.analytics.bowling_analytics import get_bowling_ranking
-from app.services.analytics.query_service import get_bowling_rankings
 from app.models.match import Innings
-from app.services.ai.response_generator import generate_answer
 
-# Use an actual parsed innings here
 innings = [
       {
         "batting_team": "BELIEVERS",
@@ -649,21 +643,3 @@ innings = [
     Innings(**inning)
     for inning in innings
 ]
-
-# query = BattingQuery(
-#     metric=BattingMetric.FOURS,
-#     rank=1,
-#     innings_scope="super_over"
-# )
-
-question = "who has best economy"
-
-result = get_bowling_rankings(innings, "Red Wings", question)
-
-gen_ans = generate_answer(
-            question,
-            result
-        )
-print(gen_ans)
-for player in result:
-    print(player["player_name"], player["value"])
