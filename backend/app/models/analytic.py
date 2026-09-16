@@ -43,4 +43,8 @@ class AnalyticsQuery(BaseModel):
     query_type: QueryType
     batting: BattingQuery | None = None
     bowling: BowlingQuery | None = None
+    
+class BattingOpportunityQuery(BaseModel):
+    player_name: str | None = None
+    match_count: int | None = Field(default=None, ge=1)
 
