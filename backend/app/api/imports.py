@@ -20,6 +20,12 @@ async def upload_scorecard(file: UploadFile = File(...)) :
     #         print(line_number, repr(line))
 
     pages = detect_pages(extracted_text)
+
+    # print("\n========== PLAYERS PAGE ==========")
+
+    # for index, line in enumerate(pages["players"][0].splitlines()):
+    #     print(index, repr(line))
+
     parsed_match = parse_match(pages["match"][0], "Red Wings")
 
     parsed_players = parse_players(pages["players"][0], parsed_match.team_name)
@@ -32,8 +38,8 @@ async def upload_scorecard(file: UploadFile = File(...)) :
     for index, page in enumerate(pages["innings"], start=1):
         print(f"\n========== INNINGS PAGE {index} ==========")
 
-    for line in page.splitlines()[:15]:
-        print(repr(line))
+        # for line in page.splitlines()[:15]:
+        #     print(repr(line))
 
     for innings_page in pages["innings"]:
         innings = parse_innings(innings_page, parsed_match.team_name, parsed_match.opponent_name)
