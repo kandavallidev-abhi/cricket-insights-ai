@@ -91,6 +91,7 @@ def parse_innings(page: str, our_team: str, opponent_team: str) -> Innings:
     dismissal_keywords = {
         "c",
         "b",
+        "c&b",
         "lbw",
         "st",
         "run",
