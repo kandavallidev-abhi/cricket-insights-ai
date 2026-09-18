@@ -1,5 +1,5 @@
+from app.models.match import Match
 from app.models.opportunity import BattingOpportunityResult
-from app.models.match import Match, InningsType
 
 
 def get_batting_opportunities(
@@ -11,6 +11,19 @@ def get_batting_opportunities(
 
     for match in matches:
 
+        # Initialize every squad player
+        for player in match.players:
+            if player.player_name not in player_stats:
+                player_stats[player.player_name] = {
+                    "opportunities": 0,
+                    "regular_opportunities": 0,
+                    "super_over_opportunities": 0,
+                    "batting_positions": {},
+                    "total_position_weight": 0.0,
+                    "runs": 0,
+                    "balls_faced": 0
+                }
+
         team_size = len(match.players)
 
         for inning in match.innings:
@@ -18,41 +31,27 @@ def get_batting_opportunities(
             if inning.batting_team != team_name:
                 continue
 
-            if inning.innings_type == InningsType.REGULAR:
+            for batting in inning.batting:
 
-                for batter in inning.batting:
+                if batting.player_name not in player_stats:
+                    continue
 
-                    if batter.player_name not in player_stats:
-                        player_stats[batter.player_name] = {
-                            "opportunities": 0,
-                            "regular_opportunities": 0,
-                            "super_over_opportunities": 0,
-                            "batting_positions": {},
-                            "total_position_weight": 0.0,
-                            "runs": 0,
-                            "balls_faced": 0
-                        }
+                stats = player_stats[batting.player_name]
 
-                    stats = player_stats[batter.player_name]
+                stats["opportunities"] += 1
+                stats["runs"] += batting.runs
+                stats["balls_faced"] += batting.balls_faced
 
-                    stats["opportunities"] += 1
+                if inning.innings_type.value == "regular":
+
                     stats["regular_opportunities"] += 1
 
-                    position = batter.batting_position
+                    position = batting.batting_position
 
                     if position is not None:
-
-                        if position > team_size:
-                            raise ValueError(
-                                f"Invalid batting position {position} "
-                                f"for team size {team_size} "
-                                f"for player {batter.player_name}"
-                            )
-
-                        if position not in stats["batting_positions"]:
-                            stats["batting_positions"][position] = 0
-
-                        stats["batting_positions"][position] += 1
+                        stats["batting_positions"][position] = (
+                            stats["batting_positions"].get(position, 0) + 1
+                        )
 
                         position_weight = (
                             team_size - position + 1
@@ -60,31 +59,9 @@ def get_batting_opportunities(
 
                         stats["total_position_weight"] += position_weight
 
-                    stats["runs"] += batter.runs
-                    stats["balls_faced"] += batter.balls_faced
+                elif inning.innings_type.value == "super_over":
 
-            elif inning.innings_type == InningsType.SUPER_OVER:
-
-                for batter in inning.batting:
-
-                    if batter.player_name not in player_stats:
-                        player_stats[batter.player_name] = {
-                            "opportunities": 0,
-                            "regular_opportunities": 0,
-                            "super_over_opportunities": 0,
-                            "batting_positions": {},
-                            "total_position_weight": 0.0,
-                            "runs": 0,
-                            "balls_faced": 0
-                        }
-
-                    stats = player_stats[batter.player_name]
-
-                    stats["opportunities"] += 1
                     stats["super_over_opportunities"] += 1
-
-                    stats["runs"] += batter.runs
-                    stats["balls_faced"] += batter.balls_faced
 
     results = []
 
