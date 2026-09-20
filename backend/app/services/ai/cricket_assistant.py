@@ -1,19 +1,21 @@
 from app.services.ai.llm_client import client
 from app.services.ai.tools import (
     batting_ranking_tool,
-    bowling_ranking_tool
+    bowling_ranking_tool,
+    batting_opportunity_tool
 )
 from app.services.ai.tool_executor import execute_tool
 
 
-def ask_cricket_question(question: str, innings, our_team: str) -> str:
+def ask_cricket_question(question: str, innings, matches, our_team: str) -> str:
 
     response = client.responses.create(
         model="gpt-5.6-luna",
         input=question,
         tools=[
             batting_ranking_tool,
-            bowling_ranking_tool
+            bowling_ranking_tool,
+            batting_opportunity_tool
         ],
     )
 
@@ -25,7 +27,8 @@ def ask_cricket_question(question: str, innings, our_team: str) -> str:
                 item.name,
                 item.arguments,
                 innings,
-                our_team
+                our_team,
+                matches
             )
 
             response = client.responses.create(

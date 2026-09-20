@@ -1,5 +1,5 @@
 from app.models.match import Match
-from app.models.opportunity import BattingOpportunityResult
+from app.models.opportunity import BattingOpportunityResult, BattingOpportunityDetail
 
 
 def get_batting_opportunities(
@@ -21,7 +21,8 @@ def get_batting_opportunities(
                     "batting_positions": {},
                     "total_position_weight": 0.0,
                     "runs": 0,
-                    "balls_faced": 0
+                    "balls_faced": 0,
+                    "opportunity_details": []
                 }
 
         team_size = len(match.players)
@@ -58,10 +59,36 @@ def get_batting_opportunities(
                         ) / team_size
 
                         stats["total_position_weight"] += position_weight
+                    
+                    stats["opportunity_details"].append(
+                        BattingOpportunityDetail(
+                            match_date=match.match_date,
+                            batting_position=position,
+                            position_weight=position_weight,
+                            innings_type=inning.innings_type,
+                            runs=batting.runs,
+                            balls_faced=batting.balls_faced,
+                            strike_rate=batting.strike_rate
+                        )
+                    )
 
                 elif inning.innings_type.value == "super_over":
 
                     stats["super_over_opportunities"] += 1
+
+                    stats["opportunity_details"].append(
+                        BattingOpportunityDetail(
+                            match_date=match.match_date,
+                            batting_position=None,
+                            position_weight=None,
+                            innings_type=inning.innings_type,
+                            runs=batting.runs,
+                            balls_faced=batting.balls_faced,
+                            strike_rate=batting.strike_rate
+                        )
+                    )
+
+                
 
     results = []
 
@@ -93,7 +120,8 @@ def get_batting_opportunities(
                 average_position_weight=average_position_weight,
                 runs=stats["runs"],
                 balls_faced=stats["balls_faced"],
-                strike_rate=strike_rate
+                strike_rate=strike_rate,
+                opportunity_details=stats["opportunity_details"]
             )
         )
 

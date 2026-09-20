@@ -21,7 +21,7 @@ def get_batting_opportunity_analysis(
         results = [
             player
             for player in results
-            player.name.lower() == query.player_name.lower()
+            if player.player_name.lower() == query.player_name.lower()
         ]
 
 

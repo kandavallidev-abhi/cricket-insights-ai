@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api.imports import router as imports_router
 from test_data import innings
+from test_match_parser import matches
 from app.services.ai.cricket_assistant import ask_cricket_question
 
 app = FastAPI(
@@ -18,6 +19,7 @@ def ask_question(question: str):
     answer = ask_cricket_question(
         question,
         innings,
+        matches,
         "Red Wings"
     )
     return {

@@ -1,8 +1,9 @@
 import json
 
-from app.models.analytic import BattingQuery, BowlingQuery
+from app.models.analytic import BattingQuery, BowlingQuery, BattingOpportunityQuery
 from app.services.analytics.batting_analytics import get_batting_ranking
 from app.services.analytics.bowling_analytics import get_bowling_ranking
+from app.services.analytics.batting_opportunity_analysis import get_batting_opportunity_analysis
 from app.services.analytics.select_innings import select_innings
 
 
@@ -56,11 +57,30 @@ def execute_bowling_ranking(
         query
     )
 
+def execute_batting_opportunities(
+    arguments: str,
+    matches,
+    our_team: str
+):
+    arguments_dict = json.loads(arguments)
+
+    query = BattingOpportunityQuery.model_validate(
+        arguments_dict
+    )
+
+    return get_batting_opportunity_analysis(
+        matches,
+        our_team,
+        query
+    )
+
+
 def execute_tool(
     tool_name: str,
     arguments: str,
     innings,
-    our_team: str
+    our_team: str,
+    matches
 ):
     if tool_name == "get_batting_ranking":
         return execute_batting_ranking(
@@ -73,6 +93,13 @@ def execute_tool(
         return execute_bowling_ranking(
             arguments,
             innings,
+            our_team
+        )
+
+    if tool_name == "get_batting_opportunity":
+        return execute_batting_opportunities(
+            arguments,
+            matches,
             our_team
         )
 
