@@ -23,8 +23,7 @@ class BattingOpportunityResult(BaseModel):
     total_position_weight: float
     average_position_weight: float
     opportunity_details: list[BattingOpportunityDetail]
-    # opportunity_score: float
-    # utilisation_score: float
+    runs_per_opportunity: float
 
 class BowlingOpportunityResult(BaseModel):
     player_name: str

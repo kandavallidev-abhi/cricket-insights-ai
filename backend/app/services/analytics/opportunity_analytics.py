@@ -109,6 +109,11 @@ def get_batting_opportunities(
         else:
             average_position_weight = 0.0
 
+        if stats["opportunities"] > 0:
+            runs_per_opportunity = stats["runs"] / stats["opportunities"]
+        else:
+            runs_per_opportunity = 0.0
+
         results.append(
             BattingOpportunityResult(
                 player_name=player_name,
@@ -121,6 +126,7 @@ def get_batting_opportunities(
                 runs=stats["runs"],
                 balls_faced=stats["balls_faced"],
                 strike_rate=strike_rate,
+                runs_per_opportunity=runs_per_opportunity,
                 opportunity_details=stats["opportunity_details"]
             )
         )
